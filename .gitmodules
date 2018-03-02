@@ -1,6 +1,6 @@
 [submodule "proposal"]
 	path = proposal
-	url = https://git.overleaf.com/13833890hbhxncygrdvv
+	url = https://github.com/simzou/cs217a-proposal.git
 [submodule "VectorSync"]
 	path = VectorSync
 	url = https://github.com/wentaoshang/VectorSync.git
