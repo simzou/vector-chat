@@ -33,7 +33,13 @@ sudo sh -c './autogen.sh && ./configure && make && make install && ldconfig'
 
 # ndn-cxx
 cd ../ndn-cxx
-# ./waf configure not working
+
+# I was running out of memory to compile various libraries, adding swap space fixed this issue 
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+
 sudo sh -c "./waf configure && ./waf && ./waf install"
 
 # vectorsync
