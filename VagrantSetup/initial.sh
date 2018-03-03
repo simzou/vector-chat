@@ -21,15 +21,20 @@ sudo apt-get install default-jre default-jdk -y
 sudo apt-get install autoconf automake libtool curl make g++ unzip git wget python pkg-config -y
 
 # ndn-cxx
-sudo apt-get install build-essential libcrypto++-dev libsqlite3-dev libboost-all-dev libssl-dev -y
+sudo apt-get install build-essential libsqlite3-dev libboost-all-dev libssl-dev -y
 
-# initialize our submodules
+# initialize our submodules and retrieve their contents
 sudo git submodule init
+sudo git submodule update
 
 # protobuf
-wget https://github.com/google/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.zip && unzip protobuf-cpp-3.5.1.zip
-cd protobuf-3.5.1 
-sudo sh -c './configure && make && make install && ldconfig'
+cd protobuf
+sudo sh -c './autogen.sh && ./configure && make && make install && ldconfig'
+
+# ndn-cxx
+cd ../ndn-cxx
+# ./waf configure not working
+sudo sh -c "./waf configure && ./waf && ./waf install"
 
 # vectorsync
 # cd ../VectorSync
