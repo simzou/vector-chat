@@ -10,3 +10,7 @@
 [submodule "ndn-cxx"]
 	path = ndn-cxx
 	url = https://github.com/named-data/ndn-cxx.git
+[submodule "NFD"]
+	path = NFD
+	url = https://github.com/named-data/NFD.git
+	branch = master
