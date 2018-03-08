@@ -18,7 +18,7 @@ sudo cp /tmp/docker-machine /usr/local/bin/docker-machine
 sudo apt-get install default-jre default-jdk -y
 
 # protobuf libs
-sudo apt-get install autoconf automake libtool curl make g++ unzip git wget python pkg-config -y
+sudo apt-get install autoconf automake libtool curl make g++ unzip git wget python pkg-config gdb -y
 
 # ndn-cxx
 sudo apt-get install build-essential libsqlite3-dev libboost-all-dev libssl-dev -y
@@ -43,6 +43,11 @@ sudo mkswap /swapfile
 sudo swapon /swapfile
 
 sudo sh -c "./waf configure && ./waf && ./waf install"
+
+cd ../NFD
+sudo sh -c "./waf configure && ./waf && ./waf install"
+
+
 
 # vectorsync
 # cd ../VectorSync
