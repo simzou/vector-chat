@@ -3,7 +3,7 @@
 	url = https://github.com/simzou/cs217a-proposal.git
 [submodule "VectorSync"]
 	path = VectorSync
-	url = https://github.com/wentaoshang/VectorSync.git
+	url = https://github.com/simzou/VectorSync.git
 [submodule "protobuf"]
 	path = protobuf
 	url = https://github.com/google/protobuf.git

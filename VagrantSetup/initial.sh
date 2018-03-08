@@ -24,6 +24,8 @@ sudo apt-get install autoconf automake libtool curl make g++ unzip git wget pyth
 sudo apt-get install build-essential libsqlite3-dev libboost-all-dev libssl-dev -y
 
 # initialize our submodules and retrieve their contents
+cd /home/vectorchat
+
 sudo git submodule init
 sudo git submodule update
 
