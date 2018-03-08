@@ -33,25 +33,22 @@ sudo git submodule update
 cd protobuf
 sudo sh -c './autogen.sh && ./configure && make && make install && ldconfig'
 
-# ndn-cxx
-cd /home/vagrant/vectorchat/ndn-cxx
-
 # I was running out of memory to compile various libraries, adding swap space fixed this issue 
 sudo fallocate -l 4G /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
 
+# ndn-cxx
+cd /home/vagrant/vectorchat/ndn-cxx
 sudo sh -c "./waf configure && ./waf && ./waf install"
 
+# nfd
 cd ../NFD
 sudo sh -c "./waf configure && ./waf && ./waf install"
 
-
-
 # vectorsync
 cd /home/vagrant/vectorchat/VectorSync
-
 sudo sh -c "./waf configure && ./waf && ./waf install"
 
 
