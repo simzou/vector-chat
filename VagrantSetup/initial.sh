@@ -23,11 +23,14 @@ sudo apt-get install autoconf automake libtool curl make g++ unzip git wget pyth
 # ndn-cxx
 sudo apt-get install build-essential libsqlite3-dev libboost-all-dev libssl-dev -y
 
+# nfd (Ethernet face support)
+sudo apt-get install libpcap-dev -y
+
 # initialize our submodules and retrieve their contents
 cd /home/vagrant/vectorchat
 
 sudo git submodule init
-sudo git submodule update
+sudo git submodule update --init --recursive
 
 # protobuf
 cd protobuf
@@ -50,5 +53,3 @@ sudo sh -c "./waf configure && ./waf && ./waf install"
 # vectorsync
 cd /home/vagrant/vectorchat/VectorSync
 sudo sh -c "./waf configure && ./waf && ./waf install"
-
-
