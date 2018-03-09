@@ -49,6 +49,7 @@ sudo sh -c "./waf configure && ./waf && ./waf install"
 # nfd
 cd ../NFD
 sudo sh -c "./waf configure && ./waf && ./waf install"
+sudo cp /usr/local/etc/ndn/nfd.conf.sample /usr/local/etc/ndn/nfd.conf
 
 # vectorsync
 cd /home/vagrant/vectorchat/VectorSync
