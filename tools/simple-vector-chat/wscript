@@ -3,8 +3,13 @@ top = '../..'
 
 def build(bld):
 
+    bld.objects(
+        target='ndn2peek-objects',
+        source=bld.path.ant_glob('ndn2peek/*.cpp', excl='ndn2peek/main.cpp'),
+        use='core-objects')
+
     bld.program(
         target='../../bin/newndnpoke',
         source='new-ndn-poke.cpp',
-        use='core-objects')
+        use=['core-objects', 'ndn2peek-objects'])
 

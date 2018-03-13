@@ -26,7 +26,7 @@
  * @author Zhuo Li <zhuoli@email.arizona.edu>
  */
 
-#include "ndnpeek.hpp"
+#include "newndnpeek.hpp"
 
 namespace ndn {
 namespace peek {
@@ -68,7 +68,6 @@ NdnPeek::start()
 Interest
 NdnPeek::createInterest() const
 {
-  std::cout << "prefix: " + m_options.prefix << std::endl;
   Interest interest(m_options.prefix);
 
   if (m_options.minSuffixComponents >= 0)
@@ -124,17 +123,17 @@ NdnPeek::onNack(const lp::Nack& nack)
   lp::NackHeader header = nack.getHeader();
 
   if (m_options.isVerbose) {
-    std::cerr << "NACK, RTT: "
-              << time::duration_cast<time::milliseconds>(time::steady_clock::now() - m_expressInterestTime).count()
-              << "ms" << std::endl;
+    // std::cerr << "NACK, RTT: "
+    //           << time::duration_cast<time::milliseconds>(time::steady_clock::now() - m_expressInterestTime).count()
+    //           << "ms" << std::endl;
   }
 
   if (m_options.wantPayloadOnly) {
-    std::cout << header.getReason() << std::endl;
+    // std::cout << header.getReason() << std::endl;
   }
   else {
-    const Block& block = header.wireEncode();
-    std::cout.write(reinterpret_cast<const char*>(block.wire()), block.size());
+    // const Block& block = header.wireEncode();
+    // std::cout.write(reinterpret_cast<const char*>(block.wire()), block.size());
   }
 }
 

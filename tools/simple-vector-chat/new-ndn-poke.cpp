@@ -48,9 +48,12 @@
  * @author Jerald Paul Abraham <jeraldabraham@email.arizona.edu>
  */
 
+#include "ndn2peek/newndnpeek.hpp"
 #include "core/version.hpp"
 
 #include <sstream>
+
+#include <ndn-cxx/util/io.hpp>
 
 namespace ndn {
 namespace peek {
@@ -61,6 +64,7 @@ public:
   explicit
   NdnPoke(char* programName)
     : m_programName(programName)
+    , m_messageCount(0)
     , m_isForceDataSet(false)
     , m_isUseDigestSha256Set(false)
     , m_isLastAsFinalBlockIdSet(false)
@@ -138,6 +142,18 @@ public:
     m_prefixName = Name(prefixName);
   }
 
+  void
+  setBaseName(char* baseName)
+  {
+    m_baseName = baseName;
+  }
+
+  void
+  setNodeName(char* nodeName)
+  {
+    m_nodeName = nodeName;
+  }
+
   time::milliseconds
   getDefaultTimeout()
   {
@@ -149,9 +165,12 @@ public:
   {
     auto dataPacket = make_shared<Data>(m_prefixName);
 
-    std::stringstream payloadStream;
-    payloadStream << std::cin.rdbuf();
-    std::string payload = payloadStream.str();
+    // std::stringstream payloadStream;
+    // payloadStream << std::cin.rdbuf();
+    // std::string payload = payloadStream.str();
+    std::string payload;
+    std::cout << "Your Message: ";
+    std::getline(std::cin, payload);
     dataPacket->setContent(reinterpret_cast<const uint8_t*>(payload.c_str()), payload.length());
 
     if (m_freshnessPeriod >= time::milliseconds::zero())
@@ -201,27 +220,79 @@ public:
   void
   run()
   {
-    try {
-      shared_ptr<Data> dataPacket = createDataPacket();
-      if (m_isForceDataSet) {
-        m_face.put(*dataPacket);
-        m_isDataSent = true;
-      }
-      else {
-        m_face.setInterestFilter(m_prefixName,
-                                 bind(&NdnPoke::onInterest, this, _1, _2, dataPacket),
-                                 RegisterPrefixSuccessCallback(),
-                                 bind(&NdnPoke::onRegisterFailed, this, _1, _2));
-      }
+    while (true) {
+      std::cout << m_nodeName << std::endl;
+      std::string entireName = m_baseName + "/" + m_nodeName + "/" + std::to_string(m_messageCount);
+      std::cout << "Entire Name: " + entireName << std::endl;
+      m_prefixName = Name(entireName);
+      try {
+        shared_ptr<Data> dataPacket = createDataPacket();
+        if (m_isForceDataSet) {
+          m_face.put(*dataPacket);
+          m_isDataSent = true;
+        }
+        else {
+          // std::cout << "Message Count: " << std::to_string(m_messageCount) << std::endl;
+          m_face.setInterestFilter(m_prefixName,
+                                   bind(&NdnPoke::onInterest, this, _1, _2, dataPacket),
+                                   RegisterPrefixSuccessCallback(),
+                                   bind(&NdnPoke::onRegisterFailed, this, _1, _2));
+        }
 
-      if (m_timeout < time::milliseconds::zero())
-        m_face.processEvents(getDefaultTimeout());
-      else
-        m_face.processEvents(m_timeout);
-    }
-    catch (const std::exception& e) {
-      std::cerr << "ERROR: " << e.what() << "\n" << std::endl;
-      exit(1);
+        // gives timesout
+        if (m_timeout < time::milliseconds::zero())
+          m_face.processEvents(getDefaultTimeout());
+        else
+          m_face.processEvents(m_timeout);
+
+        // want to now get the payload from the other node
+        std::cout << "Waiting for reply..." << std::endl;
+
+        PeekOptions options;
+        options.isVerbose = false;
+        options.mustBeFresh = false;
+        options.wantRightmostChild = false;
+        options.wantPayloadOnly = true;
+        options.minSuffixComponents = -1;
+        options.maxSuffixComponents = -1;
+        options.interestLifetime = time::milliseconds(-1);
+        options.timeout = time::milliseconds(-1);
+        if (std::string(m_nodeName) == "NodeA") {
+          // std::cout << "AJSDKLFJALDKFJAD" << std::endl;
+          options.prefix = m_prefixName.toUri() + "/NodeB/" + std::to_string(m_messageCount);
+        } else if (std::string(m_nodeName) == "NodeB") {
+          options.prefix = m_prefixName.toUri() + "/NodeA/" + std::to_string(m_messageCount);
+        }
+
+        Face face;
+        NdnPeek program(face, options);
+        ResultCode exitValue = ResultCode::NONE;
+        
+        // while (exitValue != ResultCode::DATA) {
+        //   try {
+        //     // std::cout << "retrieve from prefix: " + options.prefix << std::endl;
+        //     program.start();
+        //     face.processEvents(program.getTimeout());
+        //   }
+        //   catch (const std::exception& e) {
+        //     std::cerr << "ERROR: " << e.what() << std::endl;
+        //   }
+        
+        //   ResultCode result = program.getResultCode();
+        //   if (result == ResultCode::TIMEOUT && options.isVerbose) {
+        //     std::cerr << "TIMEOUT" << std::endl;
+        //   }
+        //   sleep(1);
+        //   // std::cout << std::to_string((int)result) << std::endl;
+        //   exitValue = result;
+        // }
+
+        m_messageCount += 1;
+      }
+      catch (const std::exception& e) {
+        std::cerr << "ERROR: " << e.what() << "\n" << std::endl;
+        exit(1);
+      }
     }
   }
 
@@ -234,6 +305,8 @@ public:
 private:
   KeyChain m_keyChain;
   std::string m_programName;
+  std::string m_nodeName;
+  int m_messageCount;
   bool m_isForceDataSet;
   bool m_isUseDigestSha256Set;
   shared_ptr<Name> m_identityName;
@@ -241,6 +314,7 @@ private:
   time::milliseconds m_freshnessPeriod;
   time::milliseconds m_timeout;
   Name m_prefixName;
+  std::string m_baseName;
   bool m_isDataSent;
   Face m_face;
 };
@@ -288,7 +362,10 @@ main(int argc, char* argv[])
   if (argv[0] == 0)
     program.usage();
 
-  program.setPrefixName(argv[0]);
+  std::cout << "Prefix Name: " << argv[0] << std::endl;
+  std::cout << "Node Name: " << argv[1] << std::endl;
+  program.setBaseName(argv[0]);
+  program.setNodeName(argv[1]);
   program.run();
 
   if (program.isDataSent())
