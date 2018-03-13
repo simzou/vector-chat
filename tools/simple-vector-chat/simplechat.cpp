@@ -69,8 +69,9 @@ public:
     , m_isUseDigestSha256Set(false)
     , m_isLastAsFinalBlockIdSet(false)
     , m_freshnessPeriod(-1)
-    , m_timeout(-1)
+    , m_timeout(500000)
     , m_isDataSent(false)
+    , m_isStart(false)
   {
   }
 
@@ -154,6 +155,12 @@ public:
     m_nodeName = nodeName;
   }
 
+  void
+  setStart()
+  {
+    m_isStart = true;
+  }
+
   time::milliseconds
   getDefaultTimeout()
   {
@@ -221,77 +228,153 @@ public:
   run()
   {
     while (true) {
-      std::cout << m_nodeName << std::endl;
-      std::string entireName = m_baseName + "/" + m_nodeName + "/" + std::to_string(m_messageCount);
-      std::cout << "Entire Name: " + entireName << std::endl;
-      m_prefixName = Name(entireName);
-      try {
-        shared_ptr<Data> dataPacket = createDataPacket();
-        if (m_isForceDataSet) {
-          m_face.put(*dataPacket);
-          m_isDataSent = true;
+      if (m_isStart) {
+        // std::cout << m_nodeName << std::endl;
+        std::string entireName = m_baseName + "/" + m_nodeName + "/" + std::to_string(m_messageCount);
+        // std::cout << "Entire Name: " + entireName << std::endl;
+        m_prefixName = Name(entireName);
+        try {
+          shared_ptr<Data> dataPacket = createDataPacket();
+          if (m_isForceDataSet) {
+            m_face.put(*dataPacket);
+            m_isDataSent = true;
+          }
+          else {
+            // std::cout << "Message Count: " << std::to_string(m_messageCount) << std::endl;
+            m_face.setInterestFilter(m_prefixName,
+                                     bind(&NdnPoke::onInterest, this, _1, _2, dataPacket),
+                                     RegisterPrefixSuccessCallback(),
+                                     bind(&NdnPoke::onRegisterFailed, this, _1, _2));
+          }
+  
+          // gives timesout
+          if (m_timeout < time::milliseconds::zero())
+            m_face.processEvents(getDefaultTimeout());
+          else
+            m_face.processEvents(m_timeout);
+  
+          // want to now get the payload from the other node
+          std::cout << "Waiting for reply..." << std::endl;
+  
+          PeekOptions options;
+          options.isVerbose = false;
+          options.mustBeFresh = false;
+          options.wantRightmostChild = false;
+          options.wantPayloadOnly = true;
+          options.minSuffixComponents = -1;
+          options.maxSuffixComponents = -1;
+          options.interestLifetime = time::milliseconds(-1);
+          options.timeout = time::milliseconds(-1);
+          if (std::string(m_nodeName) == "NodeA") {
+            // std::cout << "AJSDKLFJALDKFJAD" << std::endl;
+            options.prefix = m_baseName + "/NodeB/" + std::to_string(m_messageCount);
+          } else if (std::string(m_nodeName) == "NodeB") {
+            options.prefix = m_baseName + "/NodeA/" + std::to_string(m_messageCount);
+          }
+  
+          Face face;
+          NdnPeek program(face, options);
+          ResultCode exitValue = ResultCode::NONE;
+          
+          while (exitValue != ResultCode::DATA) {
+            try {
+              // std::cout << "retrieve from prefix: " + options.prefix << std::endl;
+              program.start();
+              face.processEvents(program.getTimeout());
+            }
+            catch (const std::exception& e) {
+              std::cerr << "ERROR: " << e.what() << std::endl;
+            }
+          
+            ResultCode result = program.getResultCode();
+            if (result == ResultCode::TIMEOUT && options.isVerbose) {
+              std::cerr << "TIMEOUT" << std::endl;
+            }
+            sleep(1);
+            // std::cout << std::to_string((int)result) << std::endl;
+            exitValue = result;
+          }
+  
+          m_messageCount += 1;
         }
-        else {
-          // std::cout << "Message Count: " << std::to_string(m_messageCount) << std::endl;
-          m_face.setInterestFilter(m_prefixName,
-                                   bind(&NdnPoke::onInterest, this, _1, _2, dataPacket),
-                                   RegisterPrefixSuccessCallback(),
-                                   bind(&NdnPoke::onRegisterFailed, this, _1, _2));
+        catch (const std::exception& e) {
+          std::cerr << "ERROR: " << e.what() << "\n" << std::endl;
+          exit(1);
         }
+      } else {  
+          // std::cout << m_nodeName << std::endl;
+          std::string entireName = m_baseName + "/" + m_nodeName + "/" + std::to_string(m_messageCount);
+          // std::cout << "Entire Name: " + entireName << std::endl;
+          m_prefixName = Name(entireName);
 
-        // gives timesout
-        if (m_timeout < time::milliseconds::zero())
-          m_face.processEvents(getDefaultTimeout());
-        else
-          m_face.processEvents(m_timeout);
+          // want to now get the payload from the other node
+          std::cout << "Retrieving reply..." << std::endl;
+  
+          PeekOptions options;
+          options.isVerbose = false;
+          options.mustBeFresh = false;
+          options.wantRightmostChild = false;
+          options.wantPayloadOnly = true;
+          options.minSuffixComponents = -1;
+          options.maxSuffixComponents = -1;
+          options.interestLifetime = time::milliseconds(-1);
+          options.timeout = time::milliseconds(-1);
+          if (std::string(m_nodeName) == "NodeA") {
+            // std::cout << "AJSDKLFJALDKFJAD" << std::endl;
+            options.prefix = m_baseName + "/NodeB/" + std::to_string(m_messageCount);
+          } else if (std::string(m_nodeName) == "NodeB") {
+            options.prefix = m_baseName + "/NodeA/" + std::to_string(m_messageCount);
+          }
+  
+          Face face;
+          NdnPeek program(face, options);
+          ResultCode exitValue = ResultCode::NONE;
+          
+          while (exitValue != ResultCode::DATA) {
+            try {
+              // std::cout << "retrieve from prefix: " + options.prefix << std::endl;
+              program.start();
+              face.processEvents(program.getTimeout());
+            }
+            catch (const std::exception& e) {
+              std::cerr << "ERROR: " << e.what() << std::endl;
+            }
+          
+            ResultCode result = program.getResultCode();
+            if (result == ResultCode::TIMEOUT && options.isVerbose) {
+              std::cerr << "TIMEOUT" << std::endl;
+            }
+            sleep(1);
+            // std::cout << std::to_string((int)result) << std::endl;
+            exitValue = result;
+          }
 
-        // want to now get the payload from the other node
-        std::cout << "Waiting for reply..." << std::endl;
-
-        PeekOptions options;
-        options.isVerbose = false;
-        options.mustBeFresh = false;
-        options.wantRightmostChild = false;
-        options.wantPayloadOnly = true;
-        options.minSuffixComponents = -1;
-        options.maxSuffixComponents = -1;
-        options.interestLifetime = time::milliseconds(-1);
-        options.timeout = time::milliseconds(-1);
-        if (std::string(m_nodeName) == "NodeA") {
-          // std::cout << "AJSDKLFJALDKFJAD" << std::endl;
-          options.prefix = m_prefixName.toUri() + "/NodeB/" + std::to_string(m_messageCount);
-        } else if (std::string(m_nodeName) == "NodeB") {
-          options.prefix = m_prefixName.toUri() + "/NodeA/" + std::to_string(m_messageCount);
+          try {
+            shared_ptr<Data> dataPacket = createDataPacket();
+            if (m_isForceDataSet) {
+              m_face.put(*dataPacket);
+              m_isDataSent = true;
+            }
+            else {
+              // std::cout << "Message Count: " << std::to_string(m_messageCount) << std::endl;
+              m_face.setInterestFilter(m_prefixName,
+                                       bind(&NdnPoke::onInterest, this, _1, _2, dataPacket),
+                                       RegisterPrefixSuccessCallback(),
+                                       bind(&NdnPoke::onRegisterFailed, this, _1, _2));
+            }
+    
+            // gives timesout
+            if (m_timeout < time::milliseconds::zero())
+              m_face.processEvents(getDefaultTimeout());
+            else
+              m_face.processEvents(m_timeout);
+  
+          m_messageCount += 1;
         }
-
-        Face face;
-        NdnPeek program(face, options);
-        ResultCode exitValue = ResultCode::NONE;
-        
-        // while (exitValue != ResultCode::DATA) {
-        //   try {
-        //     // std::cout << "retrieve from prefix: " + options.prefix << std::endl;
-        //     program.start();
-        //     face.processEvents(program.getTimeout());
-        //   }
-        //   catch (const std::exception& e) {
-        //     std::cerr << "ERROR: " << e.what() << std::endl;
-        //   }
-        
-        //   ResultCode result = program.getResultCode();
-        //   if (result == ResultCode::TIMEOUT && options.isVerbose) {
-        //     std::cerr << "TIMEOUT" << std::endl;
-        //   }
-        //   sleep(1);
-        //   // std::cout << std::to_string((int)result) << std::endl;
-        //   exitValue = result;
-        // }
-
-        m_messageCount += 1;
-      }
-      catch (const std::exception& e) {
-        std::cerr << "ERROR: " << e.what() << "\n" << std::endl;
-        exit(1);
+        catch (const std::exception& e) {
+          std::cerr << "ERROR: " << e.what() << "\n" << std::endl;
+          exit(1);
+        }
       }
     }
   }
@@ -317,6 +400,7 @@ private:
   std::string m_baseName;
   bool m_isDataSent;
   Face m_face;
+  bool m_isStart;
 };
 
 int
@@ -324,8 +408,11 @@ main(int argc, char* argv[])
 {
   int option;
   NdnPoke program(argv[0]);
-  while ((option = getopt(argc, argv, "hfDi:Fx:w:V")) != -1) {
+  while ((option = getopt(argc, argv, "shfDi:Fx:w:V")) != -1) {
     switch (option) {
+    case 's':
+      program.setStart();
+      break;
     case 'h':
       program.usage();
       break;
@@ -362,8 +449,8 @@ main(int argc, char* argv[])
   if (argv[0] == 0)
     program.usage();
 
-  std::cout << "Prefix Name: " << argv[0] << std::endl;
-  std::cout << "Node Name: " << argv[1] << std::endl;
+  // std::cout << "Prefix Name: " << argv[0] << std::endl;
+  // std::cout << "Node Name: " << argv[1] << std::endl;
   program.setBaseName(argv[0]);
   program.setNodeName(argv[1]);
   program.run();

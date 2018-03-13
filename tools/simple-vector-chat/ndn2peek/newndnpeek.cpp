@@ -108,7 +108,9 @@ NdnPeek::onData(const Data& data)
 
   if (m_options.wantPayloadOnly) {
     const Block& block = data.getContent();
+    std::cout << "Reply: ";
     std::cout.write(reinterpret_cast<const char*>(block.value()), block.value_size());
+    std::cout << std::endl;
   }
   else {
     const Block& block = data.wireEncode();
