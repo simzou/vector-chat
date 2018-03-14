@@ -154,7 +154,7 @@ public:
   {
     m_nodeName = nodeName;
     if (std::string(nodeName) == "Van") {
-      m_otherNodeName = "Vincent";
+      m_otherNodeName = "Vint";
     } else {
       m_otherNodeName = "Van";
     }
