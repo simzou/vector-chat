@@ -9,7 +9,7 @@ def build(bld):
         use='core-objects')
 
     bld.program(
-        target='../../bin/simplechat',
+        target='../../bin/vectorchat',
         source='simplechat.cpp',
         use=['core-objects', 'ndn2peek-objects'])
 
