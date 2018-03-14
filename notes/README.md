@@ -6,3 +6,4 @@
     - From the original spec slide, Professor Zhang has suggested the security design of VectorChat should be modeled after this
 - [VectorSync: Distributed Dataset Synchronization over Named Data Networking](https://conferences.sigcomm.org/acm-icn/2017/proceedings/icn17-1002.pdf)
     - Conference Paper describing VectorSync in detail
+- [Winter 2018 Presentation Slides / Project Progress Update](https://goo.gl/UzHp7u)
