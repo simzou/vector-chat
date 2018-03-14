@@ -31,6 +31,8 @@
 namespace ndn {
 namespace peek {
 
+std::string g_otherNodeName;
+
 NdnPeek::NdnPeek(Face& face, const PeekOptions& options)
   : m_face(face)
   , m_options(options)
@@ -56,8 +58,9 @@ NdnPeek::getResultCode() const
 }
 
 void
-NdnPeek::start()
+NdnPeek::start(std::string otherNodeName)
 {
+  g_otherNodeName = otherNodeName;
   m_face.expressInterest(createInterest(),
                          bind(&NdnPeek::onData, this, _2),
                          bind(&NdnPeek::onNack, this, _2),
@@ -108,7 +111,7 @@ NdnPeek::onData(const Data& data)
 
   if (m_options.wantPayloadOnly) {
     const Block& block = data.getContent();
-    std::cout << "Reply: ";
+    std::cout << g_otherNodeName + ": ";
     std::cout.write(reinterpret_cast<const char*>(block.value()), block.value_size());
     std::cout << std::endl;
   }

@@ -150,9 +150,14 @@ public:
   }
 
   void
-  setNodeName(char* nodeName)
+  setNodeName(const char* nodeName)
   {
     m_nodeName = nodeName;
+    if (std::string(nodeName) == "Van") {
+      m_otherNodeName = "Vincent";
+    } else {
+      m_otherNodeName = "Van";
+    }
   }
 
   void
@@ -269,12 +274,8 @@ public:
     options.maxSuffixComponents = -1;
     options.interestLifetime = time::milliseconds(-1);
     options.timeout = time::milliseconds(-1);
-    if (std::string(m_nodeName) == "NodeA") {
-      // std::cout << "AJSDKLFJALDKFJAD" << std::endl;
-      options.prefix = m_baseName + "/NodeB/" + std::to_string(m_messageCount);
-    } else if (std::string(m_nodeName) == "NodeB") {
-      options.prefix = m_baseName + "/NodeA/" + std::to_string(m_messageCount);
-    }
+    options.prefix = m_baseName + "/" + m_otherNodeName + "/" + std::to_string(m_messageCount);
+
     // want to now get the payload from the other node
     std::cout << "Waiting for reply from " + options.prefix + " ..." << std::endl;
     
@@ -285,7 +286,7 @@ public:
     while (exitValue != ResultCode::DATA) {
       try {
         // std::cout << "retrieve from prefix: " + options.prefix << std::endl;
-        program.start();
+        program.start(m_otherNodeName);
         face.processEvents(program.getTimeout());
       }
       catch (const std::exception& e) {
@@ -335,6 +336,7 @@ private:
   KeyChain m_keyChain;
   std::string m_programName;
   std::string m_nodeName;
+  std::string m_otherNodeName;
   int m_messageCount;
   bool m_isForceDataSet;
   bool m_isUseDigestSha256Set;
@@ -397,8 +399,12 @@ main(int argc, char* argv[])
 
   // std::cout << "Prefix Name: " << argv[0] << std::endl;
   // std::cout << "Node Name: " << argv[1] << std::endl;
+  std::string nodeName;
+  std::cout << "What is your name? ";
+  std::getline(std::cin, nodeName);
+
   program.setBaseName(argv[0]);
-  program.setNodeName(argv[1]);
+  program.setNodeName(nodeName.c_str());
   program.run();
 
   if (program.isDataSent())

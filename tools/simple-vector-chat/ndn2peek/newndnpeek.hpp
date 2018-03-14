@@ -81,7 +81,7 @@ public:
    * @note The caller must invoke face.processEvents() afterwards
    */
   void
-  start();
+  start(std::string m_otherNodeName);
 
 private:
   Interest
