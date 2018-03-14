@@ -259,9 +259,7 @@ public:
   void
   sendInterestPacket()
   {
-    // want to now get the payload from the other node
-    std::cout << "Waiting for reply..." << std::endl;
-
+    
     PeekOptions options;
     options.isVerbose = false;
     options.mustBeFresh = false;
@@ -277,7 +275,9 @@ public:
     } else if (std::string(m_nodeName) == "NodeB") {
       options.prefix = m_baseName + "/NodeA/" + std::to_string(m_messageCount);
     }
-
+    // want to now get the payload from the other node
+    std::cout << "Waiting for reply from " + options.prefix + " ..." << std::endl;
+    
     Face face;
     NdnPeek program(face, options);
     ResultCode exitValue = ResultCode::NONE;
